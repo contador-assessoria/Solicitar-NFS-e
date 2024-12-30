@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Envio de Dados para NFS-e de Serviços Médicos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Otimização para mobile -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 10px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            font-size: 1.5em;
+        }
+        form {
+            max-width: 100%;
+            margin: auto;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            color: #555;
+            font-weight: bold;
+            display: block;
+            margin-top: 15px;
+            font-size: 1em;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            text-transform: uppercase; /* Visual uppercase */
+            font-size: 1em;
+        }
+        /* Estilização dos labels de exibição */
+        .label-display {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 5px;
+            font-weight: normal;
+            color: #333;
+            word-wrap: break-word;
+        }
+        .servico-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ccc; /* Linha separadora */
+            flex-wrap: wrap;
+            position: relative; /* Para posicionamento das sugestões */
+        }
+        /* Ajustes para os campos dentro do servico-item */
+        .servico-item input[type="number"] {
+            flex: 0 0 80px;
+        }
+        .servico-item .autocomplete {
+            flex: 1;
+            position: relative;
+        }
+        .servico-item input[name="descricao"] {
+            width: 100%;
+        }
+        .servico-item input[name="valor"] {
+            flex: 0 0 150px;
+        }
+        /* Estilos para o autocomplete */
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            border-top: none;
+            z-index: 99;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #fff;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .autocomplete-item:hover {
+            background-color: #e9e9e9;
+        }
+        /* Botão Remover estilizado */
+        .remover-servico {
+            background-color: #dc3545;
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        .remover-servico:hover {
+            background-color: #c82333;
+        }
+        #adicionar-servico {
+            background-color: #28a745;
+            color: #fff;
+            padding: 12px 15px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1em;
+        }
+        #adicionar-servico:hover {
+            background-color: #218838;
+        }
+        #enviar {
+            background-color: #007bff;
+            color: #fff;
+            padding: 15px;
+            margin-top: 20px;
+            width: 100%;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+        #enviar:hover {
+            background-color: #0069d9;
+        }
+        #total {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #d9534f;
+            text-align: right;
+            margin-top: 20px;
+        }
+        /* Mensagem de erro */
+        .error {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        /* Responsividade */
+        @media (max-width: 600px) {
+            body {
+                padding: 5px;
+            }
+            h2 {
+                font-size: 1.2em;
+            }
+            label {
+                font-size: 0.9em;
+            }
+            input, textarea, select {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+            .servico-item {
+                flex-direction: column;
+                align-items: flex-start;
+                width: 100%;
+            }
+            .remover-servico {
+                width: 30px;
+                height: 30px;
+                margin-left: 0;
+                align-self: flex-end;
+            }
+            #total {
+                text-align: left;
+                font-size: 1.2em;
+            }
+            #enviar {
+                font-size: 1em;
+                padding: 12px;
+            }
+            #adicionar-servico {
+                font-size: 1em;
+                padding: 12px;
+            }
+            .data-servico-container {
+                display: flex;
+                gap: 10px;
+                flex-direction: column;
+            }
+            .data-servico-container div {
+                width: 100%;
+            }
+        }
+        /* Estilização da Observações */
+        textarea[name="observacoes"] {
+            text-transform: uppercase;
+            resize: vertical;
+            min-height: 60px; /* Aproximadamente 3 linhas */
+        }
+        /* Estilização dos campos de data */
+        .data-servico-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        @media (min-width: 601px) {
+            .data-servico-container {
+                flex-direction: row;
+            }
+        }
+        @media (max-width: 600px) {
+            .data-servico-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Formulário para Emissão de NFS-e - Serviços Médicos</h2>
+
+<form id="formulario">
+    <label for="tomador">Tomador de Serviços:</label>
+    <select id="tomador" name="tomador" required>
+        <option value="">Selecione o Tomador</option>
+        <!-- Tomadores pré-definidos com informações completas -->
+        <option value="1" data-cnpj="88373121000120" data-cep="95630000" data-numero="50" data-complemento="" data-endereco="Rua Theno Jose Berlitz" data-bairro="Centro" data-cidade="Parobé" data-uf="RS">ASSOCIACAO BENEFICENTE DE PAROBE</option>
+
+        <option value="2" data-cnpj="46602691000102" data-cep="86200000" data-numero="245" data-complemento="SALA 06" data-endereco="Avenida dos Estudantes" data-bairro="Centro" data-cidade="Ibipora" data-uf="RS">EQUIPE GESTAO EM SAUDE LTDA</option>
+
+        <!--
+             <option value="3" data-cnpj="" data-cep="" data-numero="" data-complemento="" data-endereco="" data-bairro="Sé" data-cidade="" data-uf="">MODELO</option>
+        -->
+
+        <option value="outro">Outro</option> <!-- Opção para informar manualmente -->
+        <!-- Adicione mais tomadores conforme necessário -->
+    </select>
+    <div id="tomador-error" class="error"></div>
+
+    <label for="cnpj">CNPJ do Tomador:</label>
+    <input type="text" id="cnpj" name="cnpj" required placeholder="Digite o CNPJ">
+    <div id="cnpj-error" class="error"></div>
+
+    <label>Razão Social:</label>
+    <div id="razao-social" class="label-display"></div>
+
+    <label for="cep">CEP:</label>
+    <input type="text" id="cep" name="cep" required placeholder="00000000">
+    <div id="cep-error" class="error"></div>
+
+    <label for="numero">Número:</label>
+    <input type="text" id="numero" name="numero" required placeholder="Digite o Número">
+
+    <label for="complemento">Complemento:</label>
+    <input type="text" id="complemento" name="complemento" placeholder="Digite o Complemento">
+
+    <label>Endereço, Bairro, Cidade e UF:</label>
+    <div id="endereco-completo" class="label-display"></div>
+
+    <!-- Novo Campo Opcional: Inscrição Municipal -->
+    <label for="inscricao-municipal">Inscrição Municipal (Se necessário):</label>
+    <input type="text" id="inscricao-municipal" name="inscricao-municipal" placeholder="Digite a Inscrição Municipal">
+
+    <div class="data-servico-container">
+        <div>
+            <label for="data-inicial">Data Inicial do Serviço (Opcional):</label>
+            <input type="date" id="data-inicial" name="data-inicial">
+            <div id="data-inicial-error" class="error"></div>
+        </div>
+        <div>
+            <label for="data-final">Data Final do Serviço (Opcional):</label>
+            <input type="date" id="data-final" name="data-final">
+            <div id="data-final-error" class="error"></div>
+        </div>
+    </div>
+
+    <div id="servicos">
+        <h3>Lista de Serviços Prestados</h3> 
+        <h5>Pode ser informado valores totais ou quantidade de horas.</h5>        
+        <!-- Removido o header dos serviços -->
+        <div class="servico-item">
+            <input type="number" name="quantidade" placeholder="Qtd" required min="1">
+            <div class="autocomplete">
+                <input type="text" name="descricao" placeholder="Descrição do Serviço" required>
+                <div class="autocomplete-items"></div>
+            </div>
+            <input type="text" name="valor" placeholder="Valor (R$)" required>
+            <button type="button" class="remover-servico">X</button>
+        </div>
+    </div>
+    <button type="button" id="adicionar-servico">Adicionar Serviço</button>
+
+    <div id="total">Total: R$ 0,00</div>
+
+    <label for="observacoes">Observações:</label>
+    <textarea name="observacoes" id="observacoes" placeholder="Digite as observações" rows="3"></textarea>
+
+    <label for="pagamento">Forma de Pagamento:</label>
+    <select id="pagamento" name="pagamento" required>
+        <option value="">Selecione</option>
+        <option value="DINHEIRO">Dinheiro</option>
+        <option value="CARTÃO DE CRÉDITO">Cartão de Crédito</option>
+        <option value="CARTÃO DE DÉBITO">Cartão de Débito</option>
+        <option value="PIX">Pix</option>
+        <option value="BOLETO">Boleto</option>
+        <option value="TRANSFERÊNCIA BANCÁRIA">Transferência Bancária</option>
+    </select>
+
+    <button type="button" id="enviar">Enviar via WhatsApp</button>
+</form>
+
+<script>
+    // Lista de serviços para autocomplete
+    const servicosDisponiveis = [
+        "CONSULTA MÉDICA",
+        "CONSULTA ESPECIALIZADA",
+        "CIRURGIA",
+        "ATENDIMENTO EM UTI",
+        "TELEMEDICINA",
+        "VACINAÇÃO"
+    ];
+
+    // Função para formatar números com ponto como separador de milhar e vírgula para decimal
+    function formatNumber(num) {
+        return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Função para validar o CNPJ
+    function validarCNPJ(cnpj) {
+        // Remove caracteres não numéricos
+        cnpj = cnpj.replace(/[^\d]+/g, '');
+
+        if (cnpj.length !== 14)
+            return false;
+
+        // Elimina CNPJs inválidos conhecidos
+        if (/^(\d)\1+$/.test(cnpj))
+            return false;
+
+        // Valida DVs
+        let tamanho = cnpj.length - 2;
+        let numeros = cnpj.substring(0, tamanho);
+        let digitos = cnpj.substring(tamanho);
+        let soma = 0;
+        let pos = tamanho - 7;
+        for (let i = tamanho; i >= 1; i--) {
+            soma += parseInt(numeros.charAt(tamanho - i)) * pos--;
+            if (pos < 2)
+                pos = 9;
+        }
+        let resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+        if (resultado !== parseInt(digitos.charAt(0)))
+            return false;
+
+        tamanho = tamanho + 1;
+        numeros = cnpj.substring(0, tamanho);
+        soma = 0;
+        pos = tamanho - 7;
+        for (let i = tamanho; i >= 1; i--) {
+            soma += parseInt(numeros.charAt(tamanho - i)) * pos--;
+            if (pos < 2)
+                pos = 9;
+        }
+        resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+        if (resultado !== parseInt(digitos.charAt(1)))
+            return false;
+
+        return true;
+    }
+
+    // Função para exibir mensagens de erro
+    function exibirErro(elementId, mensagem) {
+        document.getElementById(elementId).innerText = mensagem;
+    }
+
+    // Função para limpar mensagens de erro
+    function limparErro(elementId) {
+        document.getElementById(elementId).innerText = '';
+    }
+
+    // Função para buscar dados da API do CNPJ usando AllOrigins para contornar CORS
+    async function buscarCNPJ(cnpj) {
+        try {
+            const url = `https://www.receitaws.com.br/v1/cnpj/${cnpj}`;
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+
+            const response = await fetch(proxyUrl);
+            if (!response.ok) {
+                throw new Error('Falha na requisição');
+            }
+            const data = await response.json();
+            const parsedData = JSON.parse(data.contents);
+
+            if (parsedData.status === 'OK') {
+                const razaoSocial = parsedData.nome ? parsedData.nome.toUpperCase() : '';
+                const logradouro = parsedData.logradouro ? parsedData.logradouro.toUpperCase() : '';
+                const bairro = parsedData.bairro ? parsedData.bairro.toUpperCase() : '';
+                const cidade = parsedData.municipio ? parsedData.municipio.toUpperCase() : '';
+                const uf = parsedData.uf ? parsedData.uf.toUpperCase() : '';
+                const enderecoCompleto = `${logradouro}; ${bairro}; ${cidade}; ${uf}`;
+
+                document.getElementById('razao-social').innerText = razaoSocial;
+                document.getElementById('endereco-completo').innerText = enderecoCompleto;
+
+                // Preencher CEP e permitir edição
+                document.getElementById('cep').value = parsedData.cep ? parsedData.cep.replace(/\D/g, '') : '';
+                document.getElementById('numero').value = parsedData.numero ? parsedData.numero : '';
+                document.getElementById('complemento').value = parsedData.complemento ? parsedData.complemento.toUpperCase() : '';
+
+                // Buscar dados do CEP para preencher endereco-completo, caso CEP retornado
+                if (parsedData.cep) {
+                    buscarCEP(parsedData.cep.replace(/\D/g, ''));
+                }
+
+                // Limpar possíveis erros
+                limparErro('cnpj-error');
+            } else {
+                exibirErro('cnpj-error', 'CNPJ não encontrado ou inválido. Por favor, preencha os dados manualmente.');
+                document.getElementById('razao-social').innerText = '';
+                document.getElementById('endereco-completo').innerText = '';
+                document.getElementById('complemento').value = '';
+            }
+        } catch (error) {
+            console.error('Erro ao buscar CNPJ:', error);
+            exibirErro('cnpj-error', 'Erro ao buscar CNPJ. Por favor, preencha os dados manualmente.');
+            document.getElementById('razao-social').innerText = '';
+            document.getElementById('endereco-completo').innerText = '';
+            document.getElementById('complemento').value = '';
+        }
+    }
+
+    // Função para buscar dados do CEP usando ViaCEP
+    async function buscarCEP(cep) {
+        try {
+            const url = `https://viacep.com.br/ws/${cep}/json/`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Falha na requisição');
+            }
+            const data = await response.json();
+            if (data.erro) {
+                exibirErro('cep-error', 'CEP não encontrado. Por favor, preencha manualmente.');
+                return;
+            }
+            const logradouro = data.logradouro ? data.logradouro.toUpperCase() : '';
+            const bairro = data.bairro ? data.bairro.toUpperCase() : '';
+            const cidade = data.localidade ? data.localidade.toUpperCase() : '';
+            const uf = data.uf ? data.uf.toUpperCase() : '';
+            const enderecoCompleto = `${logradouro}; ${bairro}; ${cidade}; ${uf}`;
+
+            document.getElementById('endereco-completo').innerText = enderecoCompleto;
+            limparErro('cep-error');
+        } catch (error) {
+            console.error('Erro ao buscar CEP:', error);
+            exibirErro('cep-error', 'Erro ao buscar CEP. Por favor, preencha manualmente.');
+        }
+    }
+
+    // Função para aplicar máscara no CEP
+    function aplicarMascaraCEP(cep) {
+        return cep.replace(/\D/g, '').substring(0, 8);
+    }
+
+    // Função para formatar valores com ponto e vírgula
+    function formatarValor(valor) {
+        valor = valor.replace(/\D/g, '');
+        if (valor.length === 0) return '';
+        let num = parseFloat(valor) / 100;
+        return formatNumber(num);
+    }
+
+    // Função para formatar data de "yyyy-mm-dd" para "dd/mm/yyyy"
+    function formatarData(data) {
+        if (!data) return ''; // Retorna vazio se a data não for fornecida
+        const partes = data.split('-');
+        if (partes.length !== 3) return data;
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    // Validação do CNPJ no evento blur
+    document.getElementById('cnpj').addEventListener('blur', function() {
+        const cnpj = this.value.trim();
+        const cnpjLimpo = cnpj.replace(/[^\d]+/g, '');
+        if (cnpjLimpo.length === 0) {
+            exibirErro('cnpj-error', 'O campo CNPJ é obrigatório.');
+            return;
+        }
+        if (cnpjLimpo.length !== 14) {
+            exibirErro('cnpj-error', 'O CNPJ deve conter exatamente 14 dígitos.');
+            return;
+        }
+        if (!validarCNPJ(cnpjLimpo)) {
+            exibirErro('cnpj-error', 'CNPJ inválido.');
+            return;
+        }
+        // Se o CNPJ for válido, tentar buscar os dados
+        buscarCNPJ(cnpjLimpo);
+        limparErro('cnpj-error');
+    });
+
+    // Validação do CEP no evento blur
+    document.getElementById('cep').addEventListener('blur', function() {
+        const cep = aplicarMascaraCEP(this.value.trim());
+        this.value = cep;
+        if (cep.length === 0) {
+            exibirErro('cep-error', 'O campo CEP é obrigatório.');
+            return;
+        }
+        if (cep.length !== 8) {
+            exibirErro('cep-error', 'O CEP deve conter exatamente 8 dígitos.');
+            return;
+        }
+        // Buscar dados do CEP
+        buscarCEP(cep);
+    });
+
+    // Função para recalcular o total
+    function recalcularTotal() {
+        let totalNota = 0;
+        const servicoItens = document.getElementsByClassName('servico-item');
+        for (let i = 0; i < servicoItens.length; i++) {
+            const quantidade = parseFloat(servicoItens[i].querySelector('input[name="quantidade"]').value) || 0;
+            let valorInput = servicoItens[i].querySelector('input[name="valor"]').value.replace(/\./g, '').replace(',', '.');
+            const valor = parseFloat(valorInput) || 0;
+            totalNota += quantidade * valor;
+        }
+        const totalNotaFormatado = formatNumber(totalNota);
+        document.getElementById('total').innerText = `Total: R$ ${totalNotaFormatado}`;
+        return totalNota;
+    }
+
+    // Função para criar o autocomplete
+    function criarAutocomplete(inp, arr) {
+        closeAllLists(inp);
+        const autocompleteDiv = inp.parentNode.querySelector('.autocomplete-items');
+        if (!autocompleteDiv) return;
+
+        const val = inp.value.toUpperCase();
+        let filteredArr = [];
+
+        if (val) {
+            filteredArr = arr.filter(item => item.toUpperCase().includes(val));
+        } else {
+            // Se o campo estiver vazio, mostrar todas as opções
+            filteredArr = arr.slice();
+        }
+
+        const maxSuggestions = 5;
+        let count = 0;
+
+        filteredArr.forEach(item => {
+            if (count >= maxSuggestions) return;
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('autocomplete-item');
+            if (val) {
+                // Destaque da parte correspondente
+                const startIndex = item.toUpperCase().indexOf(val);
+                if (startIndex !== -1) {
+                    const endIndex = startIndex + val.length;
+                    itemDiv.innerHTML = 
+                        item.substring(0, startIndex) +
+                        "<strong>" + item.substring(startIndex, endIndex) + "</strong>" +
+                        item.substring(endIndex);
+                } else {
+                    itemDiv.textContent = item;
+                }
+            } else {
+                itemDiv.textContent = item;
+            }
+            // Evento de clique na sugestão
+            itemDiv.addEventListener('click', function() {
+                inp.value = item;
+                closeAllLists(inp);
+                recalcularTotal();
+            });
+            autocompleteDiv.appendChild(itemDiv);
+            count++;
+        });
+
+        if (filteredArr.length === 0) {
+            const noMatchDiv = document.createElement('div');
+            noMatchDiv.classList.add('autocomplete-item');
+            noMatchDiv.innerHTML = "Nenhum resultado encontrado";
+            autocompleteDiv.appendChild(noMatchDiv);
+        }
+    }
+
+    // Função para fechar todas as listas de autocomplete
+    function closeAllLists(element) {
+        const items = document.getElementsByClassName('autocomplete-items');
+        for (let i = 0; i < items.length; i++) {
+            if (element !== items[i] && element !== element.parentNode.querySelector('.autocomplete-items')) {
+                items[i].innerHTML = '';
+            }
+        }
+    }
+
+    // Função para adicionar event listeners aos inputs de serviço
+    function adicionarListenersServico(servicoDiv) {
+        const quantidadeInput = servicoDiv.querySelector('input[name="quantidade"]');
+        const descricaoInput = servicoDiv.querySelector('input[name="descricao"]');
+        const valorInput = servicoDiv.querySelector('input[name="valor"]');
+        const removerBtn = servicoDiv.querySelector('.remover-servico');
+
+        // Uppercase para o campo descrição e configuração do autocomplete
+        descricaoInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+            criarAutocomplete(this, servicosDisponiveis);
+            recalcularTotal();
+        });
+
+        // Evento para exibir autocomplete ao focar no campo
+        descricaoInput.addEventListener('focus', function() {
+            criarAutocomplete(this, servicosDisponiveis);
+        });
+
+        // Evento para exibir autocomplete ao clicar no campo (para dispositivos móveis)
+        descricaoInput.addEventListener('click', function() {
+            criarAutocomplete(this, servicosDisponiveis);
+        });
+
+        // Evento para limpar autocomplete ao sair do campo
+        descricaoInput.addEventListener('blur', function() {
+            // Pequeno delay para permitir o clique nas sugestões
+            setTimeout(() => {
+                closeAllLists(this);
+            }, 100);
+        });
+
+        // Formatar valor monetário no input de valor
+        valorInput.addEventListener('input', function() {
+            let valor = formatarValor(this.value);
+            this.value = valor;
+            recalcularTotal();
+        });
+
+        // Recalcular total ao alterar a quantidade
+        quantidadeInput.addEventListener('input', function() {
+            recalcularTotal();
+        });
+
+        // Event listener para o botão de remover serviço
+        removerBtn.addEventListener('click', function() {
+            servicoDiv.remove();
+            recalcularTotal();
+        });
+    }
+
+    // Inicializar listeners no serviço inicial
+    const servicoInicial = document.querySelector('.servico-item');
+    adicionarListenersServico(servicoInicial);
+
+    // Event listener para adicionar novo serviço
+    document.getElementById('adicionar-servico').addEventListener('click', function() {
+        const servicosDiv = document.getElementById('servicos');
+        const novoServico = document.createElement('div');
+        novoServico.className = 'servico-item';
+        novoServico.innerHTML = `
+            <input type="number" name="quantidade" placeholder="Qtd" required min="1">
+            <div class="autocomplete">
+                <input type="text" name="descricao" placeholder="Descrição do Serviço" required>
+                <div class="autocomplete-items"></div>
+            </div>
+            <input type="text" name="valor" placeholder="Valor (R$)" required>
+            <button type="button" class="remover-servico">X</button>
+        `;
+        servicosDiv.appendChild(novoServico);
+        // Focar no campo de quantidade do novo serviço
+        novoServico.querySelector('input[name="quantidade"]').focus();
+
+        // Adicionar listeners para o novo serviço
+        adicionarListenersServico(novoServico);
+    });
+
+    // Event listener para fechar a lista de autocomplete quando clicar fora
+    document.addEventListener('click', function (e) {
+        closeAllLists(e.target);
+    });
+
+    // Event listener para selecionar o tomador e preencher os campos
+    document.getElementById('tomador').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value && selectedOption.value !== 'outro') {
+            const cnpj = selectedOption.getAttribute('data-cnpj');
+            const cep = selectedOption.getAttribute('data-cep');
+            const numero = selectedOption.getAttribute('data-numero');
+            const complemento = selectedOption.getAttribute('data-complemento') || '';
+            const endereco = selectedOption.getAttribute('data-endereco') || '';
+            const bairro = selectedOption.getAttribute('data-bairro') || '';
+            const cidade = selectedOption.getAttribute('data-cidade') || '';
+            const uf = selectedOption.getAttribute('data-uf') || '';
+
+            document.getElementById('cnpj').value = cnpj;
+            document.getElementById('cnpj').disabled = true; // Impede edição do CNPJ quando selecionado da lista
+
+            // Set razao-social to selected option's text
+            document.getElementById('razao-social').innerText = selectedOption.text;
+
+            // Preencher CEP, Número e Complemento
+            document.getElementById('cep').value = cep;
+            document.getElementById('numero').value = numero;
+            document.getElementById('complemento').value = complemento;
+
+            // Preencher Endereço Completo com separação por ;
+            const enderecoCompleto = `${endereco}; ${bairro}; ${cidade}; ${uf}`;
+            document.getElementById('endereco-completo').innerText = enderecoCompleto;
+
+            // Limpar possíveis erros
+            limparErro('tomador-error');
+            limparErro('cnpj-error');
+        } else if (selectedOption.value === 'outro') {
+            // Permitir edição manual dos campos
+            document.getElementById('cnpj').value = '';
+            document.getElementById('razao-social').innerText = '';
+            document.getElementById('endereco-completo').innerText = '';
+            document.getElementById('cep').value = '';
+            document.getElementById('numero').value = '';
+            document.getElementById('complemento').value = '';
+            document.getElementById('inscricao-municipal').value = '';
+            document.getElementById('cnpj').disabled = false; // Permite edição do CNPJ
+        } else {
+            // Se nenhuma opção selecionada, limpar os campos
+            document.getElementById('cnpj').value = '';
+            document.getElementById('razao-social').innerText = '';
+            document.getElementById('endereco-completo').innerText = '';
+            document.getElementById('cep').value = '';
+            document.getElementById('numero').value = '';
+            document.getElementById('complemento').value = '';
+            document.getElementById('inscricao-municipal').value = '';
+            document.getElementById('cnpj').disabled = false; // Permite edição do CNPJ
+        }
+    });
+
+    // Event listener para enviar via WhatsApp
+    document.getElementById('enviar').addEventListener('click', function() {
+        const tomador = document.getElementById('tomador').value;
+        const empresa = document.getElementById('razao-social').innerText.trim();
+        const cnpj = document.getElementById('cnpj').value.trim();
+        const enderecoCompleto = document.getElementById('endereco-completo').innerText.trim();
+        const numero = document.getElementById('numero').value.trim();
+        const complemento = document.getElementById('complemento').value.trim();
+        const cep = document.getElementById('cep').value.trim();
+        const dataInicial = document.getElementById('data-inicial').value;
+        const dataFinal = document.getElementById('data-final').value;
+        const observacoes = document.getElementById('observacoes').value.trim().toUpperCase();
+        const pagamento = document.getElementById('pagamento').value;
+        const inscricaoMunicipal = document.getElementById('inscricao-municipal').value.trim();
+
+        // Verificar se há mensagens de erro
+        const cnpjErro = document.getElementById('cnpj-error').innerText;
+        const cepErro = document.getElementById('cep-error').innerText;
+        const dataInicialErro = document.getElementById('data-inicial-error').innerText;
+        const dataFinalErro = document.getElementById('data-final-error').innerText;
+        if (cnpjErro || cepErro || dataInicialErro || dataFinalErro) {
+            alert('Por favor, corrija os erros no formulário antes de enviar.');
+            return;
+        }
+
+        // Validações adicionais
+        if (empresa === '' || cnpj === '' || enderecoCompleto === '' || cep === '' || numero === '' || pagamento === '') {
+            alert('Por favor, preencha todos os campos obrigatórios.');
+            return;
+        }
+
+        // Validar as datas somente se forem preenchidas
+        if ((dataInicial !== '' && dataFinal === '') || (dataFinal !== '' && dataInicial === '')) {
+            alert('Por favor, preencha ambas as datas ou deixe ambas em branco.');
+            return;
+        }
+
+        // Validar se a data final não é anterior à data inicial, somente se ambas forem preenchidas
+        if (dataInicial !== '' && dataFinal !== '' && new Date(dataFinal) < new Date(dataInicial)) {
+            alert('A data final não pode ser anterior à data inicial.');
+            return;
+        }
+
+        let servicos = '';
+        let totalNota = 0;
+        const servicoItens = document.getElementsByClassName('servico-item');
+        for (let i = 0; i < servicoItens.length; i++) {
+            const quantidade = parseFloat(servicoItens[i].querySelector('input[name="quantidade"]').value) || 0;
+            const descricao = servicoItens[i].querySelector('input[name="descricao"]').value.trim().toUpperCase();
+            let valorInput = servicoItens[i].querySelector('input[name="valor"]').value.replace(/\./g, '').replace(',', '.');
+            const valor = parseFloat(valorInput) || 0;
+            const subtotal = quantidade * valor;
+            totalNota += subtotal;
+            servicos += `${quantidade} | ${descricao} | R$ ${formatNumber(valor)}\n`;
+        }
+
+        const totalNotaFormatado = formatNumber(totalNota);
+        const dataInicialFormatada = formatarData(dataInicial);
+        const dataFinalFormatada = formatarData(dataFinal);
+        const complementoText = complemento ? `, ${complemento}` : '';
+        const inscricaoMunicipalText = inscricaoMunicipal ? `\nInscrição Municipal: ${inscricaoMunicipal}` : '';
+
+        const mensagem = `*DADOS DO TOMADOR:*
+Empresa: ${empresa.toUpperCase()}
+CNPJ: ${cnpj}
+Endereço: ${enderecoCompleto}${complementoText}, ${numero}
+CEP: ${cep}${inscricaoMunicipalText}
+
+*PERÍODO DO SERVIÇO:*
+Data Inicial: ${dataInicialFormatada}
+Data Final: ${dataFinalFormatada}
+
+*OBSERVAÇÕES:*
+${observacoes}
+
+*LISTA DE SERVIÇOS PRESTADOS:*
+${servicos}
+*TOTAL DA NOTA:* R$ ${totalNotaFormatado}
+*FORMA DE PAGAMENTO:* ${pagamento}`;
+
+        const numeroWhatsApp = '5555996636737'; // Substitua pelo número desejado
+        const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
+
+        // Debugging: Verifique a URL gerada no console
+        console.log(url);
+
+        // Abrir a URL no WhatsApp
+        window.open(url, '_blank');
+    });
+</script>
+
+</body>
+</html>
