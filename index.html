@@ -5,6 +5,9 @@
     <title>Envio de Dados para NFS-e de Serviços Médicos</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Otimização para mobile -->
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: Arial, sans-serif;
             background-color: #f2f2f2;
@@ -37,7 +40,6 @@
             margin-top: 5px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            box-sizing: border-box;
             text-transform: uppercase; /* Visual uppercase */
             font-size: 1em;
         }
@@ -51,29 +53,57 @@
             color: #333;
             word-wrap: break-word;
         }
+        /* Container para Número e Complemento */
+        .numero-complemento-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .numero-complemento-container div {
+            flex: 1;
+            min-width: 0;
+        }
+        #numero {
+            flex: 0.4; /* Número ocupa 40% */
+        }
+        #complemento {
+            flex: 0.6; /* Complemento ocupa 60% */
+        }
         .servico-item {
             display: flex;
-            align-items: center;
+            align-items: flex-start; /* Alinha os itens ao topo */
             gap: 10px;
             margin-bottom: 15px;
             padding-bottom: 15px;
             border-bottom: 1px solid #ccc; /* Linha separadora */
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            overflow: hidden;
             position: relative; /* Para posicionamento das sugestões */
         }
         /* Ajustes para os campos dentro do servico-item */
         .servico-item input[type="number"] {
-            flex: 0 0 80px;
+            flex: 0 0 60px;
+            min-width: 60px;
+            text-align: center; /* Centralizar texto */
+            font-size: 0.8em; /* Reduzir fonte dos placeholders */
         }
         .servico-item .autocomplete {
-            flex: 1;
+            flex: 1 1 auto;
             position: relative;
+            min-width: 150px;
         }
         .servico-item input[name="descricao"] {
             width: 100%;
+            flex: 1 1 auto;
+            min-width: 150px;
+            font-size: 0.8em; /* Reduzir fonte dos placeholders */
+            text-align: center; /* Centralizar placeholder */
         }
         .servico-item input[name="valor"] {
-            flex: 0 0 150px;
+            flex: 0 0 120px;
+            min-width: 100px;
+            font-size: 0.8em; /* Reduzir fonte dos placeholders */
+            text-align: center; /* Centralizar placeholder */
         }
         /* Estilos para o autocomplete */
         .autocomplete-items {
@@ -95,16 +125,23 @@
         .autocomplete-item:hover {
             background-color: #e9e9e9;
         }
+        /* Subcontainer para botões "X" e "+" */
+        .servico-botoes {
+            display: flex;
+            flex-direction: column;
+            gap: 5px; /* Espaço entre os botões */
+            margin-left: 10px;
+        }
         /* Botão Remover estilizado */
         .remover-servico {
             background-color: #dc3545;
             color: #fff;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 1.2em;
+            font-size: 1.5em; /* Fonte maior para o "X" */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -113,18 +150,22 @@
         .remover-servico:hover {
             background-color: #c82333;
         }
-        #adicionar-servico {
+        /* Botão Adicionar Serviço estilizado */
+        .adicionar-servico {
             background-color: #28a745;
             color: #fff;
-            padding: 12px 15px;
-            margin-top: 10px;
+            width: 40px;
+            height: 40px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            width: 100%;
-            font-size: 1em;
+            font-size: 1.5em; /* Fonte maior para o "+" */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
         }
-        #adicionar-servico:hover {
+        .adicionar-servico:hover {
             background-color: #218838;
         }
         #enviar {
@@ -170,15 +211,13 @@
                 font-size: 0.9em;
             }
             .servico-item {
-                flex-direction: column;
-                align-items: flex-start;
-                width: 100%;
+                flex-wrap: nowrap;
+                overflow-x: auto;
             }
-            .remover-servico {
-                width: 30px;
-                height: 30px;
-                margin-left: 0;
-                align-self: flex-end;
+            .remover-servico, .adicionar-servico {
+                width: 35px;
+                height: 35px;
+                font-size: 1.2em;
             }
             #total {
                 text-align: left;
@@ -188,13 +227,12 @@
                 font-size: 1em;
                 padding: 12px;
             }
-            #adicionar-servico {
-                font-size: 1em;
-                padding: 12px;
+            .servico-botoes {
+                margin-left: 5px;
             }
             .data-servico-container {
                 display: flex;
-                gap: 10px;
+                gap: 15px;
                 flex-direction: column;
             }
             .data-servico-container div {
@@ -205,12 +243,13 @@
         textarea[name="observacoes"] {
             text-transform: uppercase;
             resize: vertical;
-            min-height: 60px; /* Aproximadamente 3 linhas */
+            min-height: 80px; /* Aumentar altura mínima */
+            font-size: 1em;
         }
         /* Estilização dos campos de data */
         .data-servico-container {
             display: flex;
-            gap: 10px;
+            gap: 15px; /* Aumentar espaçamento */
             margin-top: 15px;
         }
         @media (min-width: 601px) {
@@ -259,11 +298,17 @@
     <input type="text" id="cep" name="cep" required placeholder="00000000">
     <div id="cep-error" class="error"></div>
 
-    <label for="numero">Número:</label>
-    <input type="text" id="numero" name="numero" required placeholder="Digite o Número">
-
-    <label for="complemento">Complemento:</label>
-    <input type="text" id="complemento" name="complemento" placeholder="Digite o Complemento">
+    <!-- Agrupar Número e Complemento em um container flex -->
+    <div class="numero-complemento-container">
+        <div>
+            <label for="numero">Número:</label>
+            <input type="text" id="numero" name="numero" required placeholder="Digite o Número">
+        </div>
+        <div>
+            <label for="complemento">Complemento:</label>
+            <input type="text" id="complemento" name="complemento" placeholder="Digite o Complemento">
+        </div>
+    </div>
 
     <label>Endereço, Bairro, Cidade e UF:</label>
     <div id="endereco-completo" class="label-display"></div>
@@ -274,13 +319,13 @@
 
     <div class="data-servico-container">
         <div>
-            <label for="data-inicial">Data Inicial do Serviço (Opcional):</label>
-            <input type="date" id="data-inicial" name="data-inicial">
+            <label for="data-inicial">Data Inicial:</label>
+            <input type="date" id="data-inicial" name="data-inicial" placeholder="DD/MM/AAAA">
             <div id="data-inicial-error" class="error"></div>
         </div>
         <div>
-            <label for="data-final">Data Final do Serviço (Opcional):</label>
-            <input type="date" id="data-final" name="data-final">
+            <label for="data-final">Data Final:</label>
+            <input type="date" id="data-final" name="data-final" placeholder="DD/MM/AAAA">
             <div id="data-final-error" class="error"></div>
         </div>
     </div>
@@ -296,15 +341,17 @@
                 <div class="autocomplete-items"></div>
             </div>
             <input type="text" name="valor" placeholder="Valor (R$)" required>
-            <button type="button" class="remover-servico">X</button>
+            <div class="servico-botoes">
+                <button type="button" class="remover-servico" title="Remover Serviço">X</button>
+                <button type="button" class="adicionar-servico" title="Adicionar Serviço">+</button>
+            </div>
         </div>
     </div>
-    <button type="button" id="adicionar-servico">Adicionar Serviço</button>
-
+    
     <div id="total">Total: R$ 0,00</div>
 
     <label for="observacoes">Observações:</label>
-    <textarea name="observacoes" id="observacoes" placeholder="Digite as observações" rows="3"></textarea>
+    <textarea name="observacoes" id="observacoes" placeholder="Informe detalhes adicionais para a nota fiscal" rows="3"></textarea>
 
     <label for="pagamento">Forma de Pagamento:</label>
     <select id="pagamento" name="pagamento" required>
@@ -612,6 +659,7 @@
         const descricaoInput = servicoDiv.querySelector('input[name="descricao"]');
         const valorInput = servicoDiv.querySelector('input[name="valor"]');
         const removerBtn = servicoDiv.querySelector('.remover-servico');
+        const adicionarBtn = servicoDiv.querySelector('.adicionar-servico');
 
         // Uppercase para o campo descrição e configuração do autocomplete
         descricaoInput.addEventListener('input', function() {
@@ -655,14 +703,15 @@
             servicoDiv.remove();
             recalcularTotal();
         });
+
+        // Event listener para o botão de adicionar serviço
+        adicionarBtn.addEventListener('click', function() {
+            adicionarNovoServico();
+        });
     }
 
-    // Inicializar listeners no serviço inicial
-    const servicoInicial = document.querySelector('.servico-item');
-    adicionarListenersServico(servicoInicial);
-
-    // Event listener para adicionar novo serviço
-    document.getElementById('adicionar-servico').addEventListener('click', function() {
+    // Função para adicionar um novo serviço
+    function adicionarNovoServico() {
         const servicosDiv = document.getElementById('servicos');
         const novoServico = document.createElement('div');
         novoServico.className = 'servico-item';
@@ -673,20 +722,21 @@
                 <div class="autocomplete-items"></div>
             </div>
             <input type="text" name="valor" placeholder="Valor (R$)" required>
-            <button type="button" class="remover-servico">X</button>
+            <div class="servico-botoes">
+                <button type="button" class="remover-servico" title="Remover Serviço">X</button>
+                <button type="button" class="adicionar-servico" title="Adicionar Serviço">+</button>
+            </div>
         `;
         servicosDiv.appendChild(novoServico);
-        // Focar no campo de quantidade do novo serviço
-        novoServico.querySelector('input[name="quantidade"]').focus();
-
         // Adicionar listeners para o novo serviço
         adicionarListenersServico(novoServico);
-    });
+        // Focar no campo de quantidade do novo serviço
+        novoServico.querySelector('input[name="quantidade"]').focus();
+    }
 
-    // Event listener para fechar a lista de autocomplete quando clicar fora
-    document.addEventListener('click', function (e) {
-        closeAllLists(e.target);
-    });
+    // Inicializar listeners no serviço inicial
+    const servicoInicial = document.querySelector('.servico-item');
+    adicionarListenersServico(servicoInicial);
 
     // Event listener para selecionar o tomador e preencher os campos
     document.getElementById('tomador').addEventListener('change', function() {
